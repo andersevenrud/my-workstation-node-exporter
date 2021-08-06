@@ -1,0 +1,21 @@
+{
+  "name": "my-workstation-node-exporter",
+  "version": "1.0.0",
+  "description": "A prometheus statistics exporter that collects statistics from various sources",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "serve": "nodemon -w index.js -w modules.js index.js"
+  },
+  "author": "Anders Evenrud <andersevenrud@gmail.com>",
+  "license": "CC-BY",
+  "dependencies": {
+    "express": "^4.17.1",
+    "fast-glob": "^3.2.7",
+    "prom-client": "^13.1.0",
+    "xml2js": "^0.4.23"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.12"
+  }
+}
