@@ -85,17 +85,20 @@ const nvidiaSmiModule = () => {
         {
           type: 'utilization',
           value: parseValue(memory_util),
-          sensor: 'memory_utilization'
+          sensor: 'memory_utilization',
+          label: `NV ${index} Memory`,
         },
         {
           type: 'utilization',
           value: parseValue(encoder_util),
-          sensor: 'encoder_utilization'
+          sensor: 'encoder_utilization',
+          label: `NV ${index} Encoder`,
         },
         {
           type: 'utilization',
           value: parseValue(decoder_util),
-          sensor: 'decoder_utilization'
+          sensor: 'decoder_utilization',
+          label: `NV ${index} Decoder`,
         },
         {
           type: 'power',
@@ -110,28 +113,33 @@ const nvidiaSmiModule = () => {
         {
           type: 'frequency',
           value: parseValue(graphics_clock) * 1000 * 1000,
-          sensor: 'graphics_clock'
+          sensor: 'graphics_clock',
+          label: `NV ${index} Core`,
         },
         {
           type: 'frequency',
           value: parseValue(sm_clock) * 1000 * 1000,
-          sensor: 'sm_clock'
+          sensor: 'sm_clock',
+          label: `NV ${index} SM`,
         },
         {
           type: 'frequency',
           value: parseValue(mem_clock) * 1000 * 1000,
-          sensor: 'mem_clock'
+          sensor: 'mem_clock',
+          label: `NV ${index} Mem`,
         },
         {
           type: 'frequency',
           value: parseValue(video_clock) * 1000 * 1000,
-          sensor: 'video_clock'
+          sensor: 'video_clock',
+          label: `NV ${index} Video`,
         },
       ].map(entry => ({
+          label: `NV ${index}`,
           ...entry,
           device: `gpu${index}`,
           adapter: 'nvidia-smi',
-          sensor: `gpu${index}_${entry.sensor}`
+          sensor: `gpu${index}_${entry.sensor}`,
       }))
     })
   }
@@ -151,6 +159,7 @@ const cpuFreqModule = () => ({
       type: 'frequency',
       adapter: 'cpu',
       sensor: `cpu${i}_clock`,
+      label: `Core ${i}`,
       value: n * 1000
     }))
 })
@@ -158,40 +167,51 @@ const cpuFreqModule = () => ({
 /**
  * memory from system utils
  */
-const memoryModule = () => ({
-  enabled: true,
-  collect: () => execPromise('free -m'),
-  parse: str => str
-    .split('\n')
-    .slice(1)
-    .map(s => s.replace(/\s+/g, ' ').replace(':', '').trim())
-    .filter(String)
-    .flatMap(str => {
-      const [key, total, used, free] = str.split(' ')
-      const name = key.toLowerCase()
+const memoryModule = () => {
+  const labels = {
+    mem: 'Memory',
+    swap: 'Swap'
+  }
 
-      return [
-        {
-          type: 'memoryTotal',
-          value: parseInt(total),
-          sensor: `${name}_total`,
-          adapter: 'free'
-        },
-        {
-          type: 'memoryFree',
-          value: parseInt(free),
-          sensor: `${name}_free`,
-          adapter: 'free'
-        },
-        {
-          type: 'memoryUsage',
-          value: parseInt(used),
-          sensor: `${name}_used`,
-          adapter: 'free'
-        },
-      ]
-    })
-})
+  return {
+    enabled: true,
+    collect: () => execPromise('free -m'),
+    parse: str => str
+      .split('\n')
+      .slice(1)
+      .map(s => s.replace(/\s+/g, ' ').replace(':', '').trim())
+      .filter(String)
+      .flatMap(str => {
+        const [key, total, used, free] = str.split(' ')
+        const name = key.toLowerCase()
+        const label = labels[name] || name
+
+        return [
+          {
+            label,
+            type: 'memoryTotal',
+            value: parseInt(total),
+            sensor: `${name}_total`,
+            adapter: 'free'
+          },
+          {
+            label,
+            type: 'memoryFree',
+            value: parseInt(free),
+            sensor: `${name}_free`,
+            adapter: 'free'
+          },
+          {
+            label,
+            type: 'memoryUsage',
+            value: parseInt(used),
+            sensor: `${name}_used`,
+            adapter: 'free'
+          },
+        ]
+      })
+  }
+}
 
 /**
  * mpstat cpu information
@@ -209,6 +229,7 @@ const mpStatModule = () => ({
         type: 'utilization',
         value: Math.round(100 - cpu.idle),
         sensor: 'cpu0_utilization',
+        label: 'CPU 0',
         adapter: 'mpstat'
       }
     ]
@@ -229,8 +250,9 @@ const nvidiaSettingsModule = () => ({
     .map(([, gpuid, fanid, value]) => ({
       type: 'fan',
       adapter: 'nvidia-settings',
-      sensor: `fan${fanid}_input`,
+      sensor: `gpu${gpuid}_fan${fanid}_input`,
       device: `gpu${gpuid}`,
+      label: `NV ${gpuid} #${fanid}`,
       value: parseInt(value)
     }))
 })
@@ -251,7 +273,7 @@ const hwmonModule = () => ({
     .map(({ name, current }) => {
       const [adapter, _, device, sensor] = name.replace('/sys/devices/platform/', '').split('/')
       const value = Math.round((parseInt(current.trim()) / 255) * 100)
-      return { type: 'fanspeed', sensor, adapter, device, value }
+      return { type: 'fanspeed', label: sensor, sensor, adapter, device, value }
     })
 })
 
