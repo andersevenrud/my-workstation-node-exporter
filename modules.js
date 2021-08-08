@@ -277,6 +277,38 @@ const hwmonModule = () => ({
     })
 })
 
+/**
+ * powercap kernel module
+ */
+const powercapModule = () => {
+  // Get Watts used in last measurement based on diff of micro Joules counter.
+  const calculate = (a, b) => Math.round((a - b) / 1000000)
+
+  const read = () => execPromise('cat /sys/class/powercap/intel-rapl/intel-rapl:0/energy_uj')
+    .then(str => parseInt(str.trim()))
+
+  return {
+    enabled: true,
+    collect: async() => {
+      const before = await read()
+      await new Promise(r => setTimeout(r, 1000))
+      const after = await read()
+      return calculate(after, before)
+    },
+    parse: value => [
+      {
+        type: 'power',
+        sensor: 'power_readings',
+        device: 'cpu0',
+        adapter: 'powercap',
+        label: 'CPU 0',
+        sensor: 'cpu0_power_readings',
+        value
+      }
+    ]
+  }
+}
+
 module.exports = [
   lmSensorsModule,
   nvidiaSmiModule,
@@ -284,5 +316,6 @@ module.exports = [
   memoryModule,
   mpStatModule,
   nvidiaSettingsModule,
-  hwmonModule
+  hwmonModule,
+  //powercapModule
 ]

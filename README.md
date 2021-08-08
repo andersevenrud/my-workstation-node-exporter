@@ -8,6 +8,7 @@ A prometheus statistics exporter that collects statistics from various sources:
 * nvidia-smi
 * nvidia-settings
 * cpufreq
+* powercap
 * free
 
 **This was made for personal purposes, but you might find something of use in here**
