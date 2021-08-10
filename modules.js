@@ -218,7 +218,7 @@ const memoryModule = () => {
  */
 const mpStatModule = () => ({
   enabled: true,
-  collect: () => execPromise('mpstat -o JSON').then(JSON.parse),
+  collect: () => execPromise('mpstat 1 1 -o JSON').then(JSON.parse),
   parse: (mp) => {
     const [host] = mp.sysstat.hosts
     const [stats] = host.statistics
