@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "serve": "nodemon -w index.js -w modules.js index.js"
+    "serve": "node index.js",
+    "dev": "nodemon -w index.js -w modules.js index.js"
   },
   "author": "Anders Evenrud <andersevenrud@gmail.com>",
   "license": "CC-BY",
