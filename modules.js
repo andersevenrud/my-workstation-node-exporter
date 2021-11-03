@@ -284,7 +284,7 @@ const powercapModule = () => {
   // Get Watts used in last measurement based on diff of micro Joules counter.
   const calculate = (a, b) => Math.round((a - b) / 1000000)
 
-  const read = () => execPromise('cat /sys/class/powercap/intel-rapl/intel-rapl:0/energy_uj')
+  const read = () => execPromise('sudo cat /sys/class/powercap/intel-rapl/intel-rapl:0/energy_uj')
     .then(str => parseInt(str.trim()))
 
   return {
@@ -309,6 +309,35 @@ const powercapModule = () => {
   }
 }
 
+const ryzenModule = () => {
+  const parseValue = str => parseFloat(str.split(': ')[1])
+
+  return {
+    enabled: true,
+    collect: () => execPromise('sudo /usr/local/bin/ryzen'),
+    parse: str => str
+      .trim()
+      .split('\n')
+      .filter(str => str.match(/^Core (\d+|sum)/))
+      .map(str => str.replace(/^Core /, ''))
+      .map(row => row.split(', '))
+      .flatMap(items => {
+        const sum = items.length === 1
+        const [lbl] = items
+        return [
+          {
+            type: 'power',
+            sensor: 'power_readings',
+            device: 'cpu0' + (sum ? '' : `_${lbl}`),
+            adapter: 'ryzen',
+            label: 'CPU 0' + (sum ? '' : ` Core ${lbl}`),
+            value: parseValue(items[sum ? 0 : 1])
+          }
+        ]
+      })
+  }
+}
+
 module.exports = [
   lmSensorsModule,
   nvidiaSmiModule,
@@ -317,5 +346,6 @@ module.exports = [
   mpStatModule,
   nvidiaSettingsModule,
   hwmonModule,
-  //powercapModule
+  //powercapModule,
+  ryzenModule
 ]
